@@ -42,15 +42,29 @@ public class PositionController {
 
 	@FXML
 	private TableColumn<Position, Double> heSoLuongColumn;
-    private ObservableList<Position> positionList;
+  
     @FXML
     private Button saveButton;
+    @FXML
+    private Button editPositon;
+    @FXML
+    private Button addPosition;
     @FXML
     private TextField positionNameTextField;
     @FXML
     private TextField salaryCoefficientTextField;
+	private static PositionController instance;
+    private ObservableList<Position> positionList;
+    String title = "";
     public void initialize() {
+    	positionShow();
+  }
+    public void positionShow() {
     	try {
+//    	    chucVuColumn.setCellValueFactory(new PropertyValueFactory<>("chucVu"));
+//    		 if (chucVuColumn != null) {
+//    	            chucVuColumn.setCellValueFactory(new PropertyValueFactory<>("tenChucVu"));
+//    	        }
 		Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/database", "root", "");
 
         String sql = "SELECT chuc_vu, he_so_luong FROM database.positiondata";
@@ -73,8 +87,12 @@ public class PositionController {
         heSoLuongColumn.setStyle("-fx-alignment: center;");
     } catch (SQLException e) {
         e.printStackTrace();
+    	}
     }
-  }
+    public PositionController() {
+    	instance=this;
+    }
+   
   
 	/**
 	 * hiển thị bảng khi thêm, sửa chức vụ
@@ -83,91 +101,106 @@ public class PositionController {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("../giaodien/PositionForm.fxml"));
 		Parent root = loader.load();
 		Stage positionFormStage = new Stage();
-		positionFormStage.setTitle(title);
+		positionFormStage.setTitle(title + "Position");
 		positionFormStage.setResizable(false);
 		positionFormStage.setScene(new Scene(root));
 		positionFormStage.show();
+		
 
 	}
-//	 @FXML
-//	 private void addPosition(ActionEvent event) throws IOException {
-//		 	showPositionForm("Add Position");
-//	    }
+	public static void updatePosition(){
+    	if(instance != null) {
+    		instance.positionShow();
+    	}
+    }
+	@FXML
+	private void handleButtonAction(ActionEvent event) throws IOException {
+	    Button button = (Button) event.getSource();
+	    String action = button.getId();
+	    System.out.println(action);
+	    if (action.equals("addPosition")) {
+	        showPositionForm("Add");
+	        title="Add";
+	    } else if (action.equals("editPosition")) {
+	        showPositionForm("Edit");
+	        title="Edit";
+	    }
+	}
+	
+	 private void addPosition() {
+		 	Alert alert;
+//	        alert = new Alert(AlertType.ERROR, "Bạn chư");
+
+			String positionName = positionNameTextField.getText();
+			String salaryCoefficientStr = salaryCoefficientTextField.getText();
+		    double salaryCoefficient = Double.parseDouble(salaryCoefficientStr);
+		    if (positionName.trim().isEmpty()) {
+		        alert = new Alert(AlertType.ERROR, "Bạn chưa nhập đủ thông tin");
+		        alert.showAndWait();
+		        if (salaryCoefficient < 0.0 || salaryCoefficient > 30.0) {
+		        		alert = new Alert(AlertType.ERROR, "Hệ số lương không đúng");
+				        alert.showAndWait();
+				        return;
+		        }
+		        return;
+		    }
+
+			try {
+			    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/database", "root", "");
+			    // Kiểm tra trùng mã nhân viên
+			    String sql = "SELECT * FROM database.positiondata WHERE chuc_vu = ?";
+			    PreparedStatement stmt = conn.prepareStatement(sql);
+			    stmt.setString(1, positionName);
+			    ResultSet rs = stmt.executeQuery();
+			    if (rs.next()) {
+			        alert = new Alert(AlertType.ERROR, "Chức vụ đã tồn tại!");
+			        alert.showAndWait();
+			        return; 
+			    }
+			    rs.close();
+			    stmt.close();
+
+			    // Thêm mới nhân viên
+			    sql = "INSERT INTO positiondata (chuc_vu, he_so_luong) VALUES (?, ?)";
+			    PreparedStatement insertStmt = conn.prepareStatement(sql);
+			    insertStmt.setString(1, positionName);
+			    insertStmt.setDouble(2, salaryCoefficient);
+		
+			    // Thực thi câu lệnh INSERT
+			    insertStmt.executeUpdate();
+			    insertStmt.close();
+			    conn.close();
+			} catch (SQLException s) {
+			    s.printStackTrace();
+			}
+			 Stage stage = (Stage) saveButton.getScene().getWindow();
+			 stage.close();
+			 positionShow();
+			 PositionController.updatePosition();	
+	 }
 	 @FXML
-	 private void editPosition(ActionEvent event) throws IOException {
-		 	showPositionForm("Edit Position");
+	 public void handleSaveButton() {
+		 if(title.equals("Add")) {
+				addPosition();
+			} else if (title.equals("Edit")) {
+				try {
+					editPosition();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		 
+
+	 }
+	 private void editPosition() throws IOException {
+//		 	showPositionForm("Edit");
+		 System.out.println("Edit");
 	    }
 	 
 	  /**
 	     * thêm chức vụ
 	     */
-//	 @FXML
-//	 private void addPosition(ActionEvent event) throws IOException, SQLException {
-//		 showPositionForm("Add Position");
-//		 saveButton = new Button();
-//		 saveButton.setOnAction(e -> {	
-//		 try {
-//			 System.out.println("đã vào");
-//	        Alert alert;
-//	        String positionName = positionNameTextField.getText();
-//	        String salaryCoefficient = salaryCoefficient.getText();
-//	        String birthday = birthdayTextField.getText();
-//	        int workday = Integer.parseInt(workdayTextField.getText());		       
-//	        Toggle selectedToggle = gender.getSelectedToggle();
-//	        String gender = ((RadioButton) selectedToggle).getText();
-//	        String position = "";
-//	        position = positionComboBox.getValue().toString();
-//	        
-////	        PositionController positionController = new PositionController();
-////	        double heSoLuong = positionController.getSalaryCoefficientByChucVu(position);
-//            if (id.isEmpty() || fullname.isEmpty() || email.isEmpty()  ||
-//            	birthday.isEmpty() || gender.isEmpty()) {
-//            		alert = new Alert(AlertType.ERROR, "Bạn chưa nhập đủ thông tin");
-//            		alert.showAndWait();
-//	    }
-//            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/database", "root", "");
-//	        // Tạo câu lệnh SQL DELETE và thực thi
-//	        String sql = "SELECT * FROM database.employeedata WHERE id = ?";
-//	        PreparedStatement stmt = conn.prepareStatement(sql);
-//		    // Kiểm tra trùng mã nhân viên
-//	        ResultSet rs = stmt.executeQuery(sql);
-//	        if (rs.next()) {
-//		        // Hiển thị thông báo lỗi nếu mã nhân viên đã tồn tại trong cơ sở dữ liệu
-//		        alert = new Alert(AlertType.ERROR, "Employee ID already exists.");
-//		        alert.showAndWait();
-//		        return; // Thoát phương thức nếu thông tin không hợp lệ
-//            }
-//            rs.close();
-//            stmt.close();
-//	        String insertQuery = "INSERT INTO employeedata (id, ho_ten, ngay_sinh, gioi_tinh, email, chuc_vu, he_so_luong, ngay_lam_viec, tong_luong) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-//		    PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
-//		    insertStmt.setString(1, id);
-//		    insertStmt.setString(2, fullname);
-//		    insertStmt.setString(3, birthday);
-//		    insertStmt.setString(4, gender);
-//		    insertStmt.setString(5, email);
-//		    insertStmt.setString(6, position);
-//		    conn = DriverManager.getConnection("jdbc:mysql://localhost/database", "root", "");
-//		    // lấy hệ số lương gắn với chức vụ ở sql
-//	        sql = "SELECT he_so_luong FROM database.positiondata WHERE position = ?";
-//	        stmt = conn.prepareStatement(sql);
-//	        stmt.setString(1, position);
-//	        rs = stmt.executeQuery();
-//	        double salaryCoefficient = 0.0;
-//	        if (rs.next()) {
-//	        	salaryCoefficient = rs.getDouble("he_so_luong");
-//	        }
-//		    insertStmt.setDouble(7, salaryCoefficient);
-//		    insertStmt.setInt(8, workday);
-//		    // lấy lương cơ bản = 1,490,000
-//		    double tongLuong = (salaryCoefficient * 1490000 * workday) / 26;
-//		    insertStmt.setDouble(9, tongLuong);
-//		 } catch (Exception ex) {
-//	            ex.printStackTrace();
-//	        }
-//		  });
-//
-//	 }
+
 	 
 	 /**
 	  * xóa chức vụ
@@ -188,6 +221,7 @@ public class PositionController {
 		        PreparedStatement stmt = conn.prepareStatement(sql);
 		        stmt.setString(1, selected.getPositionName());
 		        stmt.executeUpdate();
+	            positionTableView.getItems().remove(selected);
 
 		        // Đóng kết nối
 		        conn.close();
@@ -196,6 +230,13 @@ public class PositionController {
 		    }
 		  }
 		}
+	 /**
+	  * 
+	  * tìm kiếm
+	  * @return
+	  */
+	 
+	 
 	 public Position getPositionByChucVu(String chucVu) {
 		    initialize(); // khởi tạo danh sách vị trí
 		    for (Position position : positionList) {

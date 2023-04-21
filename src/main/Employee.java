@@ -9,9 +9,9 @@ public class Employee {
 	private String position;
 	private double salaryCoefficient;
 	private int workday;
-	private double salary;
+	private String salary;
 
-    public Employee(String id, String name, String birthday, String gender, String email, String position, double salaryCoefficient, int workday, double salary ) {
+    public Employee(String id, String name, String birthday, String gender, String email, String position, double salaryCoefficient, int workday, String salary ) {
         this.id= id;
         this.name=name;
         this.birthday=birthday;
@@ -86,11 +86,11 @@ public class Employee {
 		this.workday = workday;
 	}
 
-	public double getSalary() {
+	public String getSalary() {
 		return salary;
 	}
 
-	public void setSalary(double salary) {
+	public void setSalary(String salary) {
 		this.salary = salary;
 	}
 
